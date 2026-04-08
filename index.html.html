@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEMA ESCOLAR 2026 - DASHBOARD POR GRUPO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 1);
+        }
+        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .tab-active { border-bottom: 4px solid #1e1b4b; color: #1e1b4b; }
+        .chart-wrapper { 
+            position: relative; 
+            margin: auto; 
+            height: 250px; 
+            width: 250px; 
+        }
+    </style>
+</head>
+<body class="pb-32">
+
+    <!-- Header -->
+    <header class="bg-indigo-950 text-white p-6 shadow-2xl sticky top-0 z-50 rounded-b-[2rem]">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-black tracking-tighter leading-none">CONTROL ESCOLAR 2026</h1>
+                <p class="text-[10px] text-indigo-400 mt-1 font-medium italic">M.C. JUAN MIGUEL TAPIA</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="exportarDatos()" class="bg-indigo-800 p-3 rounded-xl active:scale-90" title="Exportar"><i class="fas fa-download"></i></button>
+                <button onclick="mostrarFormularioNuevo()" class="bg-white text-indigo-950 p-3 rounded-xl shadow-lg active:scale-90"><i class="fas fa-plus"></i></button>
+            </div>
+        </div>
+        
+        <div class="flex mt-6 gap-6 border-t border-indigo-900/50 pt-4">
+            <button onclick="cambiarTab('lista')" id="tab-lista" class="flex-1 text-center pb-2 font-black text-xs uppercase tracking-widest tab-active">Lista</button>
+            <button onclick="cambiarTab('dashboard')" id="tab-dashboard" class="flex-1 text-center pb-2 font-black text-xs uppercase tracking-widest text-indigo-400">Dashboard</button>
+        </div>
+    </header>
+
+    <!-- Sección Lista -->
+    <div id="seccion-lista" class="block">
+        <div class="bg-white/80 backdrop-blur-md shadow-sm border-b overflow-x-auto hide-scrollbar flex p-4 gap-3 sticky top-[155px] z-40">
+            <div id="filtros-grupos" class="flex gap-2"></div>
+        </div>
+        <main class="p-4">
+            <div class="mb-4 relative">
+                <input type="text" id="busqueda-alumno" oninput="renderAlumnos()" placeholder="Buscar alumno..." class="w-full bg-white border-2 border-indigo-50 rounded-2xl py-4 px-6 text-sm shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                <i class="fas fa-search absolute right-6 top-4 text-indigo-200"></i>
+            </div>
+            <div id="lista-alumnos" class="space-y-3"></div>
+        </main>
+    </div>
+
+    <!-- Sección Dashboard -->
+    <div id="seccion-dashboard" class="hidden p-4 space-y-6">
+        <div class="flex justify-between items-center px-2 mt-4">
+            <h2 class="text-2xl font-black text-indigo-950">Estadísticas</h2>
+            <select id="dash-filtro-grupo" onchange="actualizarDashboard()" class="bg-indigo-100 border-none text-indigo-900 font-black text-xs rounded-xl p-3 outline-none">
+                <option value="TODOS">Ver Todo</option>
+            </select>
+        </div>
+
+        <!-- Resumen Rápido -->
+        <div class="grid grid-cols-2 gap-4">
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-indigo-50 text-center">
+                <p id="dash-label-contexto" class="text-[9px] font-black text-slate-400 uppercase">General</p>
+                <p id="dash-total-alumnos" class="text-3xl font-black text-indigo-950">0</p>
+                <p class="text-[8px] text-slate-400">Alumnos</p>
+            </div>
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-indigo-50 text-center">
+                <p class="text-[9px] font-black text-slate-400 uppercase">Promedio</p>
+                <p id="dash-promedio-gral" class="text-3xl font-black text-emerald-600">0.0</p>
+                <p class="text-[8px] text-slate-400">Puntos</p>
+            </div>
+        </div>
+
+        <!-- Gráfica Circular Animada -->
+        <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-indigo-50">
+            <h3 class="text-[10px] font-black text-indigo-900 uppercase mb-6 tracking-widest text-center">Distribución: <span id="dash-grupo-nombre" class="text-indigo-600">General</span></h3>
+            <div class="chart-wrapper">
+                <canvas id="chartCircular"></canvas>
+            </div>
+            <div id="leyenda-detallada" class="grid grid-cols-3 gap-2 mt-6">
+                <!-- Se llena con JS -->
+            </div>
+        </div>
+
+        <!-- Gráfica de Barras Comparativa -->
+        <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-indigo-50">
+            <h3 class="text-[10px] font-black text-indigo-900 uppercase mb-4 tracking-widest text-center">Promedios por Grupo</h3>
+            <canvas id="chartPromedios" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Modales -->
+    <div id="modal-alumno" class="fixed inset-0 bg-black/70 hidden z-[100] p-4 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-md max-h-[90vh] overflow-y-auto p-8 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="modal-titulo" class="text-xl font-black text-gray-900 uppercase">Ficha Alumno</h2>
+                <button onclick="cerrarModal()" class="text-gray-400 text-4xl">&times;</button>
+            </div>
+            <form id="form-alumno" class="space-y-4">
+                <input type="hidden" id="edit-id">
+                <input type="text" id="nombre" required placeholder="NOMBRE COMPLETO" class="w-full bg-gray-50 border-2 rounded-2xl p-4 font-bold outline-none focus:border-indigo-500 uppercase">
+                <div class="grid grid-cols-2 gap-4">
+                    <select id="grupo" class="bg-gray-50 border-2 rounded-2xl p-4 font-bold outline-none"></select>
+                    <input type="tel" id="whatsapp" placeholder="WHATSAPP TUTOR" class="bg-gray-50 border-2 rounded-2xl p-4 font-bold outline-none">
+                </div>
+                <div id="campos-calificaciones" class="space-y-2 bg-indigo-50 p-4 rounded-2xl"></div>
+                <button type="submit" class="w-full bg-indigo-950 text-white py-5 rounded-[2rem] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-transform">Guardar Datos</button>
+                <button type="button" id="btn-eliminar" onclick="eliminarAlumnoActual()" class="w-full text-red-500 font-black text-[10px] uppercase py-2 hidden">Eliminar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const GRUPOS = ['1A', '1B', '1C', '1D', '2A', '2B', '2C', '2D', '3A', '3B', '3C', '3D'];
+        const RASGOS_DEFAULT = [
+            { id: 'ex', nombre: 'EXAMEN', pct: 40 },
+            { id: 'ta', nombre: 'TAREAS', pct: 30 },
+            { id: 'pt', nombre: 'PARTICIPACIÓN', pct: 30 }
+        ];
+
+        let alumnos = JSON.parse(localStorage.getItem('escolar_db_v6')) || [];
+        let config = { trimestre: 'I', rasgos: RASGOS_DEFAULT };
+        let filtroActual = '1A';
+        let chartBarras = null;
+        let chartCircular = null;
+
+        function init() {
+            renderFiltros();
+            renderAlumnos();
+            llenarSelectGrupos();
+            // Pequeño delay para asegurar que Chart.js esté listo
+            setTimeout(() => actualizarDashboard(), 200);
+        }
+
+        function cambiarTab(tab) {
+            document.getElementById('seccion-lista').classList.toggle('hidden', tab !== 'lista');
+            document.getElementById('seccion-dashboard').classList.toggle('hidden', tab !== 'dashboard');
+            document.getElementById('tab-lista').classList.toggle('tab-active', tab === 'lista');
+            document.getElementById('tab-dashboard').classList.toggle('tab-active', tab === 'dashboard');
+            
+            if(tab === 'dashboard') {
+                setTimeout(() => {
+                    actualizarDashboard();
+                }, 100);
+            }
+        }
+
+        function renderFiltros() {
+            const cont = document.getElementById('filtros-grupos');
+            cont.innerHTML = '';
+            GRUPOS.forEach(g => {
+                const count = alumnos.filter(a => a.grupo === g).length;
+                const btn = document.createElement('button');
+                btn.className = `px-6 py-3 rounded-2xl font-black text-xs transition-all whitespace-nowrap ${filtroActual === g ? 'bg-indigo-950 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}`;
+                btn.innerHTML = `${g} <span class="opacity-50 text-[10px]">(${count})</span>`;
+                btn.onclick = () => { filtroActual = g; renderFiltros(); renderAlumnos(); };
+                cont.appendChild(btn);
+            });
+        }
+
+        function renderAlumnos() {
+            const cont = document.getElementById('lista-alumnos');
+            const busqueda = document.getElementById('busqueda-alumno').value.toLowerCase();
+            cont.innerHTML = '';
+            alumnos.filter(a => a.grupo === filtroActual && a.nombre.toLowerCase().includes(busqueda))
+                   .sort((a,b) => a.nombre.localeCompare(b.nombre))
+                   .forEach(a => {
+                        const prom = a.calificaciones?.[config.trimestre] || 0;
+                        cont.innerHTML += `
+                            <div class="glass-card p-4 rounded-[2rem] flex justify-between items-center border-l-[10px] ${prom >= 6 ? 'border-indigo-600' : 'border-red-500'}">
+                                <div onclick="editarAlumno('${a.id}')" class="flex-1">
+                                    <p class="font-black text-slate-800 text-xs uppercase">${a.nombre}</p>
+                                    <p class="text-[9px] font-bold text-slate-400">Promedio: ${prom.toFixed(1)}</p>
+                                </div>
+                                <button onclick="enviarWA('${a.id}')" class="bg-emerald-500 text-white w-10 h-10 rounded-xl flex items-center justify-center"><i class="fab fa-whatsapp"></i></button>
+                            </div>`;
+                   });
+        }
+
+        function actualizarDashboard() {
+            const selectGpo = document.getElementById('dash-filtro-grupo');
+            if(!selectGpo) return;
+            
+            const grupoFiltro = selectGpo.value;
+            const filtrados = grupoFiltro === 'TODOS' ? alumnos : alumnos.filter(a => a.grupo === grupoFiltro);
+            
+            document.getElementById('dash-label-contexto').innerText = grupoFiltro === 'TODOS' ? 'General' : `Grupo ${grupoFiltro}`;
+            document.getElementById('dash-grupo-nombre').innerText = grupoFiltro === 'TODOS' ? 'General' : `Grupo ${grupoFiltro}`;
+            document.getElementById('dash-total-alumnos').innerText = filtrados.length;
+
+            let suma = 0, count = 0;
+            let dist = { 5:0, 6:0, 7:0, 8:0, 9:0, 10:0 };
+
+            filtrados.forEach(a => {
+                const p = a.calificaciones?.[config.trimestre] || 0;
+                if(p > 0) {
+                    suma += p; count++;
+                    const notaRedonda = Math.max(5, Math.min(10, Math.round(p)));
+                    dist[notaRedonda]++;
+                }
+            });
+
+            document.getElementById('dash-promedio-gral').innerText = count > 0 ? (suma/count).toFixed(1) : "0.0";
+            
+            actualizarGraficaCircular(dist);
+            actualizarGraficaBarras();
+            renderLeyenda(dist);
+        }
+
+        function actualizarGraficaCircular(dist) {
+            const canvas = document.getElementById('chartCircular');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            const dataValues = [dist[5], dist[6], dist[7], dist[8], dist[9], dist[10]];
+            // Si no hay datos, mostrar algo para que no se vea vacío
+            const hasData = dataValues.some(v => v > 0);
+            
+            const colors = ['#ef4444', '#f97316', '#eab308', '#3b82f6', '#6366f1', '#10b981'];
+
+            if(chartCircular) chartCircular.destroy();
+
+            chartCircular = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['5.0', '6.0', '7.0', '8.0', '9.0', '10.0'],
+                    datasets: [{
+                        data: hasData ? dataValues : [0,0,0,0,0,0, 1], // Un valor dummy si está vacío
+                        backgroundColor: hasData ? colors : ['#f1f5f9'],
+                        hoverOffset: 15,
+                        borderWidth: 0,
+                        borderRadius: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: hasData }
+                    },
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true,
+                        duration: 1000
+                    }
+                }
+            });
+        }
+
+        function renderLeyenda(dist) {
+            const cont = document.getElementById('leyenda-detallada');
+            const labels = [
+                {k: '5', c: 'bg-red-500'}, {k: '6', c: 'bg-orange-500'}, {k: '7', c: 'bg-yellow-500'},
+                {k: '8', c: 'bg-blue-500'}, {k: '9', c: 'bg-indigo-500'}, {k: '10', c: 'bg-emerald-500'}
+            ];
+            
+            cont.innerHTML = '';
+            labels.forEach(l => {
+                cont.innerHTML += `
+                    <div class="flex flex-col items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
+                        <div class="flex items-center gap-1.5 mb-1">
+                            <div class="w-2 h-2 rounded-full ${l.c}"></div>
+                            <span class="text-[8px] font-black text-slate-500">NOTA ${l.k}</span>
+                        </div>
+                        <span class="text-xs font-black text-slate-800">${dist[l.k]} <small class="font-normal text-[8px]">al.</small></span>
+                    </div>
+                `;
+            });
+        }
+
+        function actualizarGraficaBarras() {
+            const canvas = document.getElementById('chartPromedios');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            const values = GRUPOS.map(g => {
+                const gAl = alumnos.filter(a => a.grupo === g);
+                const sum = gAl.reduce((acc, a) => acc + (a.calificaciones?.[config.trimestre] || 0), 0);
+                return gAl.length > 0 ? (sum / gAl.length).toFixed(1) : 0;
+            });
+
+            if(chartBarras) chartBarras.destroy();
+            chartBarras = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: GRUPOS,
+                    datasets: [{ label: 'Promedio', data: values, backgroundColor: '#1e1b4b', borderRadius: 4 }]
+                },
+                options: { 
+                    responsive: true, 
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { min:0, max:10, grid: { display: false } }, 
+                        x: { grid: { display: false } } 
+                    } 
+                }
+            });
+        }
+
+        // --- Resto de funciones (Modal, WA, etc.) ---
+        function mostrarFormularioNuevo() {
+            document.getElementById('form-alumno').reset();
+            document.getElementById('edit-id').value = '';
+            document.getElementById('modal-titulo').innerText = 'Nuevo Alumno';
+            document.getElementById('btn-eliminar').classList.add('hidden');
+            renderCamposCalificaciones();
+            document.getElementById('modal-alumno').classList.remove('hidden');
+        }
+
+        function renderCamposCalificaciones(vals = {}) {
+            const cont = document.getElementById('campos-calificaciones');
+            cont.innerHTML = '<p class="text-[9px] font-black text-indigo-400 mb-2 uppercase">Calificaciones</p>';
+            config.rasgos.forEach(r => {
+                cont.innerHTML += `
+                    <div class="flex items-center justify-between py-1">
+                        <span class="text-[10px] font-bold text-indigo-900">${r.nombre}</span>
+                        <input type="number" id="val-${r.id}" value="${vals[r.id] || ''}" min="0" max="10" step="0.1" class="w-16 p-2 rounded-lg border text-center font-bold">
+                    </div>`;
+            });
+        }
+
+        function editarAlumno(id) {
+            const a = alumnos.find(al => al.id === id);
+            if(!a) return;
+            mostrarFormularioNuevo();
+            document.getElementById('edit-id').value = a.id;
+            document.getElementById('nombre').value = a.nombre;
+            document.getElementById('grupo').value = a.grupo;
+            document.getElementById('whatsapp').value = a.whatsapp || '';
+            document.getElementById('modal-titulo').innerText = 'Editar Alumno';
+            document.getElementById('btn-eliminar').classList.remove('hidden');
+            renderCamposCalificaciones(a.detallesCalificaciones?.[config.trimestre] || {});
+        }
+
+        document.getElementById('form-alumno').onsubmit = (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-id').value || Date.now().toString();
+            let detCals = {}, suma = 0;
+            config.rasgos.forEach(r => {
+                const val = parseFloat(document.getElementById(`val-${r.id}`).value) || 0;
+                detCals[r.id] = val;
+                suma += (val * (r.pct / 100));
+            });
+
+            const index = alumnos.findIndex(a => a.id === id);
+            const data = {
+                id,
+                nombre: document.getElementById('nombre').value.toUpperCase(),
+                grupo: document.getElementById('grupo').value,
+                whatsapp: document.getElementById('whatsapp').value,
+                calificaciones: { [config.trimestre]: suma },
+                detallesCalificaciones: { [config.trimestre]: detCals }
+            };
+
+            if(index > -1) {
+                alumnos[index] = {...alumnos[index], ...data};
+            } else {
+                alumnos.push(data);
+            }
+            save(); cerrarModal(); renderFiltros(); renderAlumnos();
+        };
+
+        function eliminarAlumnoActual() {
+            if(confirm("¿Eliminar alumno?")) {
+                alumnos = alumnos.filter(a => a.id !== document.getElementById('edit-id').value);
+                save(); cerrarModal(); renderFiltros(); renderAlumnos();
+            }
+        }
+
+        function save() { localStorage.setItem('escolar_db_v6', JSON.stringify(alumnos)); }
+        function cerrarModal() { document.getElementById('modal-alumno').classList.add('hidden'); }
+        
+        function llenarSelectGrupos() {
+            const sel = document.getElementById('grupo');
+            const dSel = document.getElementById('dash-filtro-grupo');
+            sel.innerHTML = '';
+            dSel.innerHTML = '<option value="TODOS">Ver Todo</option>';
+            GRUPOS.forEach(g => {
+                sel.innerHTML += `<option value="${g}">${g}</option>`;
+                dSel.innerHTML += `<option value="${g}">${g}</option>`;
+            });
+        }
+
+        function exportarDatos() {
+            const blob = new Blob([JSON.stringify(alumnos)], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'RESPALDO_ESCOLAR.json'; a.click();
+        }
+
+        function enviarWA(id) {
+            const a = alumnos.find(al => al.id === id);
+            const msj = `Hola, el promedio del alumno ${a.nombre} es ${a.calificaciones[config.trimestre].toFixed(1)}.`;
+            window.open(`https://wa.me/52${a.whatsapp}?text=${encodeURIComponent(msj)}`, '_blank');
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
