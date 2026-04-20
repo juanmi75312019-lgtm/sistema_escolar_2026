@@ -3,410 +3,940 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA ESCOLAR 2026 - DASHBOARD POR GRUPO</title>
+    <title>AcademiaHub - Gestión Escolar</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --accent: #38bdf8;
+        }
+
+     
+
+   body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-main);
+            color: #f1f5f9;
+            background-image: radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.05) 0px, transparent 50%);
+            min-height: 100vh;
+        }
+
         .glass-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(226, 232, 240, 1);
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1.5rem;
         }
-        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .tab-active { border-bottom: 4px solid #1e1b4b; color: #1e1b4b; }
-        .chart-wrapper { 
-            position: relative; 
-            margin: auto; 
-            height: 250px; 
-            width: 250px; 
+
+        .input-dark {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            outline: none;
+            transition: all 0.2s;
         }
+
+        .input-dark:focus {
+            border-color: var(--accent);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .group-btn {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.btn-main {
+    padding: 12px 30px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+        
+
+        .group-btn.active {
+            background: var(--accent);
+            color: var(--bg-main);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+
+        .nav-tab {
+            padding: 0.6rem 1.5rem;
+            font-weight: 700;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-tab.active {
+            border-bottom: 2px solid var(--accent);
+            color: var(--accent);
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
-<body class="pb-32">
 
-    <!-- Header -->
-    <header class="bg-indigo-950 text-white p-6 shadow-2xl sticky top-0 z-50 rounded-b-[2rem]">
-        <div class="flex justify-between items-center">
-            <div>
-                <h1 class="text-xl font-black tracking-tighter leading-none">CONTROL ESCOLAR 2026</h1>
-                <p class="text-[10px] text-indigo-400 mt-1 font-medium italic">M.C. JUAN MIGUEL TAPIA</p>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="exportarDatos()" class="bg-indigo-800 p-3 rounded-xl active:scale-90" title="Exportar"><i class="fas fa-download"></i></button>
-                <button onclick="mostrarFormularioNuevo()" class="bg-white text-indigo-950 p-3 rounded-xl shadow-lg active:scale-90"><i class="fas fa-plus"></i></button>
-            </div>
-        </div>
-        
-        <div class="flex mt-6 gap-6 border-t border-indigo-900/50 pt-4">
-            <button onclick="cambiarTab('lista')" id="tab-lista" class="flex-1 text-center pb-2 font-black text-xs uppercase tracking-widest tab-active">Lista</button>
-            <button onclick="cambiarTab('dashboard')" id="tab-dashboard" class="flex-1 text-center pb-2 font-black text-xs uppercase tracking-widest text-indigo-400">Dashboard</button>
-        </div>
-    </header>
 
-    <!-- Sección Lista -->
-    <div id="seccion-lista" class="block">
-        <div class="bg-white/80 backdrop-blur-md shadow-sm border-b overflow-x-auto hide-scrollbar flex p-4 gap-3 sticky top-[155px] z-40">
-            <div id="filtros-grupos" class="flex gap-2"></div>
-        </div>
-        <main class="p-4">
-            <div class="mb-4 relative">
-                <input type="text" id="busqueda-alumno" oninput="renderAlumnos()" placeholder="Buscar alumno..." class="w-full bg-white border-2 border-indigo-50 rounded-2xl py-4 px-6 text-sm shadow-sm outline-none focus:ring-2 focus:ring-indigo-500">
-                <i class="fas fa-search absolute right-6 top-4 text-indigo-200"></i>
-            </div>
-            <div id="lista-alumnos" class="space-y-3"></div>
-        </main>
-    </div>
+<body class="p-0">
 
-    <!-- Sección Dashboard -->
-    <div id="seccion-dashboard" class="hidden p-4 space-y-6">
-        <div class="flex justify-between items-center px-2 mt-4">
-            <h2 class="text-2xl font-black text-indigo-950">Estadísticas</h2>
-            <select id="dash-filtro-grupo" onchange="actualizarDashboard()" class="bg-indigo-100 border-none text-indigo-900 font-black text-xs rounded-xl p-3 outline-none">
-                <option value="TODOS">Ver Todo</option>
-            </select>
-        </div>
-
-        <!-- Resumen Rápido -->
-        <div class="grid grid-cols-2 gap-4">
-            <div class="bg-white p-5 rounded-3xl shadow-sm border border-indigo-50 text-center">
-                <p id="dash-label-contexto" class="text-[9px] font-black text-slate-400 uppercase">General</p>
-                <p id="dash-total-alumnos" class="text-3xl font-black text-indigo-950">0</p>
-                <p class="text-[8px] text-slate-400">Alumnos</p>
-            </div>
-            <div class="bg-white p-5 rounded-3xl shadow-sm border border-indigo-50 text-center">
-                <p class="text-[9px] font-black text-slate-400 uppercase">Promedio</p>
-                <p id="dash-promedio-gral" class="text-3xl font-black text-emerald-600">0.0</p>
-                <p class="text-[8px] text-slate-400">Puntos</p>
-            </div>
-        </div>
-
-        <!-- Gráfica Circular Animada -->
-        <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-indigo-50">
-            <h3 class="text-[10px] font-black text-indigo-900 uppercase mb-6 tracking-widest text-center">Distribución: <span id="dash-grupo-nombre" class="text-indigo-600">General</span></h3>
-            <div class="chart-wrapper">
-                <canvas id="chartCircular"></canvas>
-            </div>
-            <div id="leyenda-detallada" class="grid grid-cols-3 gap-2 mt-6">
-                <!-- Se llena con JS -->
-            </div>
-        </div>
-
-        <!-- Gráfica de Barras Comparativa -->
-        <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-indigo-50">
-            <h3 class="text-[10px] font-black text-indigo-900 uppercase mb-4 tracking-widest text-center">Promedios por Grupo</h3>
-            <canvas id="chartPromedios" height="200"></canvas>
-        </div>
-    </div>
-
-    <!-- Modales -->
-    <div id="modal-alumno" class="fixed inset-0 bg-black/70 hidden z-[100] p-4 flex items-center justify-center backdrop-blur-sm">
-        <div class="bg-white rounded-[2.5rem] w-full max-w-md max-h-[90vh] overflow-y-auto p-8 shadow-2xl">
-            <div class="flex justify-between items-center mb-6">
-                <h2 id="modal-titulo" class="text-xl font-black text-gray-900 uppercase">Ficha Alumno</h2>
-                <button onclick="cerrarModal()" class="text-gray-400 text-4xl">&times;</button>
-            </div>
-            <form id="form-alumno" class="space-y-4">
-                <input type="hidden" id="edit-id">
-                <input type="text" id="nombre" required placeholder="NOMBRE COMPLETO" class="w-full bg-gray-50 border-2 rounded-2xl p-4 font-bold outline-none focus:border-indigo-500 uppercase">
-                <div class="grid grid-cols-2 gap-4">
-                    <select id="grupo" class="bg-gray-50 border-2 rounded-2xl p-4 font-bold outline-none"></select>
-                    <input type="tel" id="whatsapp" placeholder="WHATSAPP TUTOR" class="bg-gray-50 border-2 rounded-2xl p-4 font-bold outline-none">
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-[999] bg-slate-900/90 backdrop-blur-md border-b border-white/5 px-6 py-3">
+        <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-4">
+          <div class="flex-1 flex justify-center">
+                <h1 class="text-xl font-extrabold tracking-tighter text-white cursor-pointer" onclick="location.reload()">
+               SISTEMA DE EVALUACION<span class="text-sky-400">JUANMI</span>
+                </h1>
+                
+                <!-- Buscador -->
+                <div class="relative group hidden sm:block">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <input type="text" id="buscadorGlobal" oninput="buscarAlumnoGlobal(this.value)" placeholder="Buscar alumno..." class="bg-slate-800/50 border border-white/10 rounded-full py-2 pl-10 pr-4 text-xs text-white focus:ring-2 focus:ring-sky-500 w-[250px] transition-all outline-none">
+                    <div id="resultadosBusqueda" class="absolute top-full left-0 w-full mt-2 glass-card border border-white/10 max-h-60 overflow-y-auto hidden z-[1000] shadow-2xl"></div>
                 </div>
-                <div id="campos-calificaciones" class="space-y-2 bg-indigo-50 p-4 rounded-2xl"></div>
-                <button type="submit" class="w-full bg-indigo-950 text-white py-5 rounded-[2rem] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-transform">Guardar Datos</button>
-                <button type="button" id="btn-eliminar" onclick="eliminarAlumnoActual()" class="w-full text-red-500 font-black text-[10px] uppercase py-2 hidden">Eliminar</button>
-            </form>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="flex gap-1 bg-black/20 p-1 rounded-xl">
+                    <button onclick="setGrado(1)" id="grado-1" class="grado-btn group-btn">1°</button>
+                    <button onclick="setGrado(2)" id="grado-2" class="grado-btn group-btn">2°</button>
+                    <button onclick="setGrado(3)" id="grado-3" class="grado-btn group-btn">3°</button>
+                </div>
+                <div class="flex gap-1 bg-black/20 p-1 rounded-xl">
+                    <button onclick="setGrupo('A')" id="grupo-A" class="grupo-btn group-btn">A</button>
+                    <button onclick="setGrupo('B')" id="grupo-B" class="grupo-btn group-btn">B</button>
+                    <button onclick="setGrupo('C')" id="grupo-C" class="grupo-btn group-btn">C</button>
+                    <button onclick="setGrupo('D')" id="grupo-D" class="grupo-btn group-btn">D</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-[1600px] mx-auto p-4 md:p-8">
+        
+        <div class="mb-8 flex flex-col gap-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <h2 id="displayContexto" class="text-4xl font-black text-white">1° A</h2>
+                        <div id="infoTutorCabecera" class="bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-lg hidden">
+                            <span class="text-[10px] text-indigo-400 font-black uppercase block leading-none">Tutor a cargo</span>
+                            <span id="nombreTutorCabecera" class="text-xs font-bold text-white italic">---</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 mt-4">
+                        <span class="text-xs text-slate-500 font-bold uppercase">Tema Actual:</span>
+                        <select id="temaContenido" onchange="cambiarTemaSeleccionado(this.value)" class="bg-slate-800 text-white text-xs font-bold rounded-lg px-3 py-1 outline-none border border-white/5 cursor-pointer hover:border-sky-500/50">
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap gap-2 bg-slate-800/60 p-2 rounded-2xl border border-white/10 shadow-xl">
+                    <button onclick="promptNuevoTema()" class="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-slate-900 px-5 py-3 rounded-xl text-xs font-black transition-all">
+                        NUEVO TEMA
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center bg-slate-900/40 p-1 rounded-xl border border-slate-800">
+                <div class="flex overflow-x-auto">
+
+ <div id="contenedor-promedio"
+     class="text-center mb-4 font-bold text-sky-400 text-xl">
+
+   
+</div>
+
+                    <button onclick="switchView('evaluar')" id="btn-evaluar" class="nav-tab active text-white">Evaluación</button>
+                    <button onclick="switchView('ponderaciones')" id="btn-ponderaciones" class="nav-tab text-slate-400 hover:text-white">Configuración Grupo</button>
+                    <button onclick="switchView('stats')" id="btn-stats" class="nav-tab text-slate-400 hover:text-white">Estadísticas</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="vistas-container">
+            <!-- VISTA EVALUAR -->
+            <div id="view-evaluar" class="space-y-6">
+                <div class=lg:grid-cols-[350px_1fr]">
+                    <div class="lg:col-span-1 flex justify-center">
+                       <div class="glass-card p-6 border-l-4 border-emerald-500 relative w-full max-w-[320px]">
+                            <h3 class="font-bold mb-4 text-white text-sm">Añadir Alumno</h3>
+                            <div class="space-y-3">
+                                <div class="relative">
+                                    <input type="text" id="nuevoAlumnoNombre" oninput="autocompletarRegistro(this.value)" placeholder="Nombre del estudiante..." class="w-full input-dark p-3 rounded-xl text-xs" autocomplete="off">
+                                    <div id="autocomplete-list" class="absolute top-full left-0 w-full mt-1 glass-card border border-white/10 z-50 hidden shadow-2xl overflow-hidden"></div>
+                                </div>
+                                <input type="tel" id="nuevoAlumnoTel" placeholder="WhatsApp (Ej. 52...)" class="w-full input-dark p-3 rounded-xl text-xs">
+                                <button onclick="registrarAlumno()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition-all">
+                                    Añadir Estudiante
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-4">
+
+</div>
+                    <div class="lg:col-span-5">
+<div class="flex justify-between items-center p-4 border-t border-white/10 text-xs">
+
+   
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead id="tablaCabecera" class="bg-slate-800/60 text-[10px] uppercase font-bold text-slate-400"></thead>
+                                    <tbody id="listaEvaluacion" class="divide-y divide-slate-800/50"></tbody>
+                                </table>
+                            </div>
+                            <div id="emptyState" class="p-20 text-center hidden">
+                                <p class="text-slate-500 italic">No hay alumnos registrados en este grupo para el tema seleccionado.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- VISTA CONFIGURACIÓN -->
+            <div id="view-ponderaciones" class="hidden">
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+                    <!-- Rasgos -->
+                    <div class="glass-card p-8 border-t-4 border-sky-500">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">Configuración de Rasgos</h3>
+                        <div id="listaPonderaciones" class="space-y-3 mb-6"></div>
+                        <div class="flex justify-between items-center pt-6 border-t border-white/10">
+                            <span id="totalPorcentaje" class="font-bold text-2xl">0%</span>
+                            <div class="flex gap-2">
+                                <button onclick="agregarCriterio()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-xl text-sm font-bold">+ Añadir</button>
+                                <button onclick="savePonderaciones()" class="bg-sky-500 hover:bg-sky-400 text-slate-900 px-6 py-2 rounded-xl text-sm font-bold">Guardar</button>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Tutor -->
+                    <div class="glass-card p-8 border-t-4 border-indigo-500">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">Tutor del Grupo</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-[10px] uppercase font-black text-slate-500 mb-1 block">Nombre Completo</label>
+                                <input type="text" id="tutorNombre" placeholder="Ej. Prof. Juan Pérez" class="w-full input-dark p-3 rounded-xl text-sm">
+                            </div>
+                            <div>
+                                <label class="text-[10px] uppercase font-black text-slate-500 mb-1 block">Número de WhatsApp</label>
+                                <input type="tel" id="tutorTel" placeholder="Ej. 521..." class="w-full input-dark p-3 rounded-xl text-sm">
+                            </div>
+                            <button onclick="guardarDatosTutor()" class="w-full bg-indigo-500 hover:bg-indigo-400 text-white font-bold py-3 rounded-xl text-sm transition-all">
+                                Guardar Información del Tutor
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- VISTA STATS -->
+           <div id="view-stats" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">  
+
+    <div class="glass-card p-8 text-center">
+        <span class="text-slate-500 text-xs font-bold uppercase">Promedio General</span>
+        <h4 id="statPromedio" class="text-5xl font-black text-sky-400 mt-2">0.0</h4>
+    </div>
+
+    <div class="glass-card p-8 text-center">
+        <span class="text-slate-500 text-xs font-bold uppercase">Aprobados</span>
+        <h2 id="statAprobados" class="text-5xl font-black text-white mt-2">0</h2>
+    </div>
+
+    <div class="glass-card p-6 col-span-2">
+        <h3 class="text-white font-bold mb-4">Distribución de Calificaciones</h3>
+
+        <div class="grid grid-cols-5 gap-3 text-center">
+
+            <div>
+                <div class="text-3xl font-black text-red-500" id="stat6">0</div>
+                <div class="text-xs text-white">6</div>
+            </div>
+
+            <div>
+                <div class="text-3xl font-black text-orange-400" id="stat7">0</div>
+                <div class="text-xs text-white">7</div>
+            </div>
+
+            <div>
+                <div class="text-3xl font-black text-yellow-400" id="stat8">0</div>
+                <div class="text-xs text-white">8</div>
+            </div>
+
+            <div>
+                <div class="text-3xl font-black text-sky-400" id="stat9">0</div>
+                <div class="text-xs text-white">9</div>
+            </div>
+
+            <div>
+                <div class="text-3xl font-black text-emerald-400" id="stat10">0</div>
+                <div class="text-xs text-white">10</div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+                                 
+               
+
+
+            </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- MODALES -->
+    <!-- Expediente -->
+    <div id="modalExpediente" class="fixed inset-0 bg-black/90 backdrop-blur-xl z-[2000] flex items-center justify-center hidden p-4">
+        <div class="glass-card max-w-3xl w-full border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-8 bg-slate-800/50 border-b border-white/10 flex justify-between items-start">
+                <div>
+                    <span class="text-[10px] font-black text-sky-400 uppercase tracking-widest">Historial Académico</span>
+                    <h3 id="expNombre" class="text-3xl font-black text-white mt-1">---</h3>
+                </div>
+                <button onclick="cerrarExpediente()" class="text-slate-400 hover:text-white p-2">✕</button>
+            </div>
+            <div id="expListaTemas" class="p-8 overflow-y-auto space-y-4"></div>
+<div class="px-8 pb-6">
+    <div class="bg-slate-800/60 p-4 rounded-2xl text-center border border-white/10">
+        <span class="text-sm text-white uppercase font-bold block">
+            Promedio General (Todos los temas)
+        </span>
+        <span id="expPromedioGeneral" class="text-4xl font-black text-sky-400">
+            0.0
+        </span>
+    </div>
+</div>
+        </div>
+    </div>
+
+    <!-- Reporte WhatsApp -->
+    <div id="modalReporte" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[2000] flex items-center justify-center hidden p-4">
+        <div class="glass-card p-8 max-w-md w-full border border-white/10">
+            <h3 class="text-xl font-bold mb-4 text-white">Opciones de Reporte</h3>
+            <textarea id="textoReporte" class="w-full h-48 bg-slate-900 border border-white/10 rounded-xl p-4 text-xs text-slate-300 mb-6 focus:border-sky-500 outline-none leading-relaxed"></textarea>
+            
+            <div class="grid grid-cols-1 gap-3">
+                <button id="btnWhatsappAlumno" class="flex items-center justify-center gap-3 bg-emerald-500 hover:bg-emerald-400 text-slate-900 py-3 rounded-xl font-bold text-xs">
+                    📱 Enviar a Alumno/Padre
+                </button>
+                <button id="btnWhatsappTutor" class="flex items-center justify-center gap-3 bg-indigo-500 hover:bg-indigo-400 text-white py-3 rounded-xl font-bold text-xs">
+                    👨‍🏫 Enviar al Tutor
+                </button>
+                <button onclick="document.getElementById('modalReporte').classList.add('hidden')" class="text-slate-500 text-[10px] uppercase font-bold py-2">Cancelar</button>
+            </div>
         </div>
     </div>
 
     <script>
-        const GRUPOS = ['1A', '1B', '1C', '1D', '2A', '2B', '2C', '2D', '3A', '3B', '3C', '3D'];
-        const RASGOS_DEFAULT = [
-            { id: 'ex', nombre: 'EXAMEN', pct: 40 },
-            { id: 'ta', nombre: 'TAREAS', pct: 30 },
-            { id: 'pt', nombre: 'PARTICIPACIÓN', pct: 30 }
+
+
+        // --- ESTADO ---
+        let currentGrado = 1;
+        let currentGrupo = 'A';
+        let currentTema = '';
+        let db = { temas: {}, alumnosGlobal: [], tutores: {} };
+let paginaActual = 1;
+let alumnosPorPagina = 15;
+
+        const defaultCriterios = [
+            { nombre: 'Examen', peso: 50 },
+            { nombre: 'Tareas', peso: 30 },
+            { nombre: 'Participación', peso: 20 }
         ];
 
-        let alumnos = JSON.parse(localStorage.getItem('escolar_db_v6')) || [];
-        let config = { trimestre: 'I', rasgos: RASGOS_DEFAULT };
-        let filtroActual = '1A';
-        let chartBarras = null;
-        let chartCircular = null;
-
-        function init() {
-            renderFiltros();
-            renderAlumnos();
-            llenarSelectGrupos();
-            // Pequeño delay para asegurar que Chart.js esté listo
-            setTimeout(() => actualizarDashboard(), 200);
+        // --- PERSISTENCIA ---
+        function initDB() {
+            const saved = localStorage.getItem('academia_hub_v1');
+            if (saved) db = JSON.parse(saved);
+            else {
+                db.temas = { "Primer Periodo": {} };
+                db.alumnosGlobal = [];
+                db.tutores = {};
+            }
+            currentTema = Object.keys(db.temas)[0];
         }
 
-        function cambiarTab(tab) {
-            document.getElementById('seccion-lista').classList.toggle('hidden', tab !== 'lista');
-            document.getElementById('seccion-dashboard').classList.toggle('hidden', tab !== 'dashboard');
-            document.getElementById('tab-lista').classList.toggle('tab-active', tab === 'lista');
-            document.getElementById('tab-dashboard').classList.toggle('tab-active', tab === 'dashboard');
+        function save() { localStorage.setItem('academia_hub_v1', JSON.stringify(db)); }
+
+
+        // --- LOGICA DE ALUMNOS ---
+        function getContexto() {
+            if (!db.temas[currentTema]) db.temas[currentTema] = {};
+            const t = db.temas[currentTema];
+            if (!t[currentGrado]) t[currentGrado] = {};
+            if (!t[currentGrado][currentGrupo]) {
+                t[currentGrado][currentGrupo] = { alumnos: [], criterios: JSON.parse(JSON.stringify(defaultCriterios)) };
+            }
+            return t[currentGrado][currentGrupo];
+        }
+
+        function registrarAlumno() {
+            const nomInput = document.getElementById('nuevoAlumnoNombre');
+            const telInput = document.getElementById('nuevoAlumnoTel');
+            const nom = nomInput.value.trim();
+            const tel = telInput.value.trim();
+            if (!nom) return;
+            const ctx = getContexto();
             
-            if(tab === 'dashboard') {
-                setTimeout(() => {
-                    actualizarDashboard();
-                }, 100);
+            if (ctx.alumnos.some(a => a.nombre.toLowerCase() === nom.toLowerCase())) {
+                alert("Este alumno ya está en este grupo.");
+                return;
+            }
+
+            // Gestion Global (Historial para autocompletar)
+            let alGlobal = db.alumnosGlobal.find(a => a.nombre.toLowerCase() === nom.toLowerCase());
+            if (!alGlobal) db.alumnosGlobal.push({ nombre: nom, tel });
+            else if (tel) alGlobal.tel = tel;
+
+            const notas = {};
+            ctx.criterios.forEach(c => notas[c.nombre] = 0);
+            ctx.alumnos.push({
+    id: Date.now(),
+    nombre: nom,
+    notas: notas || {}
+});
+            
+            nomInput.value = ''; telInput.value = '';
+            save(); refresh();
+        }
+
+        function borrarAlumno(id) {
+            const ctx = getContexto();
+            const al = ctx.alumnos.find(a => a.id === id);
+            if (confirm(`¿Estás seguro de que deseas eliminar a ${al.nombre} de este tema?`)) {
+                ctx.alumnos = ctx.alumnos.filter(a => a.id !== id);
+                save(); refresh();
             }
         }
 
-        function renderFiltros() {
-            const cont = document.getElementById('filtros-grupos');
-            cont.innerHTML = '';
-            GRUPOS.forEach(g => {
-                const count = alumnos.filter(a => a.grupo === g).length;
-                const btn = document.createElement('button');
-                btn.className = `px-6 py-3 rounded-2xl font-black text-xs transition-all whitespace-nowrap ${filtroActual === g ? 'bg-indigo-950 text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-100'}`;
-                btn.innerHTML = `${g} <span class="opacity-50 text-[10px]">(${count})</span>`;
-                btn.onclick = () => { filtroActual = g; renderFiltros(); renderAlumnos(); };
-                cont.appendChild(btn);
+        // --- BUSQUEDA Y AUTOCOMPLETADO (FIX: Funciones añadidas) ---
+        function autocompletarRegistro(val) {
+            const list = document.getElementById('autocomplete-list');
+            if (!val) { list.classList.add('hidden'); return; }
+            
+            const matches = db.alumnosGlobal.filter(a => a.nombre.toLowerCase().includes(val.toLowerCase()));
+            if (matches.length === 0) { list.classList.add('hidden'); return; }
+
+            list.innerHTML = '';
+            list.classList.remove('hidden');
+            matches.forEach(m => {
+                const item = document.createElement('div');
+                item.className = "p-3 hover:bg-white/10 cursor-pointer text-xs border-b border-white/5";
+                item.textContent = m.nombre;
+                item.onclick = () => {
+                    document.getElementById('nuevoAlumnoNombre').value = m.nombre;
+                    document.getElementById('nuevoAlumnoTel').value = m.tel || '';
+                    list.classList.add('hidden');
+                };
+                list.appendChild(item);
             });
         }
 
-        function renderAlumnos() {
-            const cont = document.getElementById('lista-alumnos');
-            const busqueda = document.getElementById('busqueda-alumno').value.toLowerCase();
-            cont.innerHTML = '';
-            alumnos.filter(a => a.grupo === filtroActual && a.nombre.toLowerCase().includes(busqueda))
-                   .sort((a,b) => a.nombre.localeCompare(b.nombre))
-                   .forEach(a => {
-                        const prom = a.calificaciones?.[config.trimestre] || 0;
-                        cont.innerHTML += `
-                            <div class="glass-card p-4 rounded-[2rem] flex justify-between items-center border-l-[10px] ${prom >= 6 ? 'border-indigo-600' : 'border-red-500'}">
-                                <div onclick="editarAlumno('${a.id}')" class="flex-1">
-                                    <p class="font-black text-slate-800 text-xs uppercase">${a.nombre}</p>
-                                    <p class="text-[9px] font-bold text-slate-400">Promedio: ${prom.toFixed(1)}</p>
-                                </div>
-                                <button onclick="enviarWA('${a.id}')" class="bg-emerald-500 text-white w-10 h-10 rounded-xl flex items-center justify-center"><i class="fab fa-whatsapp"></i></button>
-                            </div>`;
-                   });
-        }
+        function buscarAlumnoGlobal(val) {
+            const res = document.getElementById('resultadosBusqueda');
+            if (!val) { res.classList.add('hidden'); return; }
 
-        function actualizarDashboard() {
-            const selectGpo = document.getElementById('dash-filtro-grupo');
-            if(!selectGpo) return;
-            
-            const grupoFiltro = selectGpo.value;
-            const filtrados = grupoFiltro === 'TODOS' ? alumnos : alumnos.filter(a => a.grupo === grupoFiltro);
-            
-            document.getElementById('dash-label-contexto').innerText = grupoFiltro === 'TODOS' ? 'General' : `Grupo ${grupoFiltro}`;
-            document.getElementById('dash-grupo-nombre').innerText = grupoFiltro === 'TODOS' ? 'General' : `Grupo ${grupoFiltro}`;
-            document.getElementById('dash-total-alumnos').innerText = filtrados.length;
+            const matches = db.alumnosGlobal.filter(a => a.nombre.toLowerCase().includes(val.toLowerCase()));
+            if (matches.length === 0) { res.classList.add('hidden'); return; }
 
-            let suma = 0, count = 0;
-            let dist = { 5:0, 6:0, 7:0, 8:0, 9:0, 10:0 };
-
-            filtrados.forEach(a => {
-                const p = a.calificaciones?.[config.trimestre] || 0;
-                if(p > 0) {
-                    suma += p; count++;
-                    const notaRedonda = Math.max(5, Math.min(10, Math.round(p)));
-                    dist[notaRedonda]++;
-                }
+            res.innerHTML = '';
+            res.classList.remove('hidden');
+            matches.forEach(m => {
+                const item = document.createElement('div');
+                item.className = "p-3 hover:bg-white/10 cursor-pointer text-xs border-b border-white/5";
+                item.innerHTML = `<strong>${m.nombre}</strong><br><span class="text-[9px] text-slate-500">Click para ver expediente</span>`;
+                item.onclick = () => {
+                    verExpediente(m.nombre);
+                    res.classList.add('hidden');
+                    document.getElementById('buscadorGlobal').value = '';
+                };
+                res.appendChild(item);
             });
-
-            document.getElementById('dash-promedio-gral').innerText = count > 0 ? (suma/count).toFixed(1) : "0.0";
-            
-            actualizarGraficaCircular(dist);
-            actualizarGraficaBarras();
-            renderLeyenda(dist);
         }
 
-        function actualizarGraficaCircular(dist) {
-            const canvas = document.getElementById('chartCircular');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            
-            const dataValues = [dist[5], dist[6], dist[7], dist[8], dist[9], dist[10]];
-            // Si no hay datos, mostrar algo para que no se vea vacío
-            const hasData = dataValues.some(v => v > 0);
-            
-            const colors = ['#ef4444', '#f97316', '#eab308', '#3b82f6', '#6366f1', '#10b981'];
+        // --- EXPEDIENTE (FIX: Función añadida) ---
+       function verExpediente(nombre) {
+    const modal = document.getElementById('modalExpediente');
+    const lista = document.getElementById('expListaTemas');
 
-            if(chartCircular) chartCircular.destroy();
+    document.getElementById('expNombre').textContent = nombre;
 
-            chartCircular = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['5.0', '6.0', '7.0', '8.0', '9.0', '10.0'],
-                    datasets: [{
-                        data: hasData ? dataValues : [0,0,0,0,0,0, 1], // Un valor dummy si está vacío
-                        backgroundColor: hasData ? colors : ['#f1f5f9'],
-                        hoverOffset: 15,
-                        borderWidth: 0,
-                        borderRadius: 10
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '75%',
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { enabled: hasData }
-                    },
-                    animation: {
-                        animateScale: true,
-                        animateRotate: true,
-                        duration: 1000
+    lista.innerHTML = '';
+
+    let sumaPromedios = 0;
+    let totalTemas = 0;
+
+    modal.classList.remove('hidden');
+
+    Object.keys(db.temas).forEach(temaName => {
+        const temaData = db.temas[temaName];
+
+        for (let g = 1; g <= 3; g++) {
+            if (!temaData[g]) continue;
+
+            for (let grp in temaData[g]) {
+                const ctx = temaData[g][grp];
+
+                const al = ctx.alumnos.find(a => a.nombre === nombre);
+                if (!al) continue;
+
+                if (!al.notas) al.notas = {};
+
+                // asegurar criterios
+                ctx.criterios.forEach(c => {
+                    if (al.notas[c.nombre] === undefined) {
+                        al.notas[c.nombre] = 0;
                     }
-                }
-            });
-        }
+                });
 
-        function renderLeyenda(dist) {
-            const cont = document.getElementById('leyenda-detallada');
-            const labels = [
-                {k: '5', c: 'bg-red-500'}, {k: '6', c: 'bg-orange-500'}, {k: '7', c: 'bg-yellow-500'},
-                {k: '8', c: 'bg-blue-500'}, {k: '9', c: 'bg-indigo-500'}, {k: '10', c: 'bg-emerald-500'}
-            ];
-            
-            cont.innerHTML = '';
-            labels.forEach(l => {
-                cont.innerHTML += `
-                    <div class="flex flex-col items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
-                        <div class="flex items-center gap-1.5 mb-1">
-                            <div class="w-2 h-2 rounded-full ${l.c}"></div>
-                            <span class="text-[8px] font-black text-slate-500">NOTA ${l.k}</span>
-                        </div>
-                        <span class="text-xs font-black text-slate-800">${dist[l.k]} <small class="font-normal text-[8px]">al.</small></span>
+                // 🔥 promedio correcto del alumno
+                const prom = Number(calcProm(al, ctx.criterios)) || 0;
+
+                sumaPromedios += prom;
+                totalTemas++;
+
+                // tarjeta
+                const card = document.createElement('div');
+                card.className = "bg-slate-900/50 p-4 rounded-xl border border-white/5";
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase">
+                            ${temaName} — ${g}° ${grp}
+                        </span>
+
+                        <span class="text-2xl font-black ${prom < 7 ? 'text-red-500' : 'text-white'}">
+                            ${prom.toFixed(1)}
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        ${ctx.criterios.map(c => `
+                            <div>
+                                <span class="text-[8px] text-slate-400 block uppercase">
+                                    ${c.nombre}
+                                </span>
+                                <span class="text-xs text-slate-200 font-bold">
+                                    ${al.notas[c.nombre]}
+                                </span>
+                            </div>
+                        `).join('')}
                     </div>
                 `;
-            });
+
+                lista.appendChild(card);
+            }
+        }
+    });
+
+    // 🔥 PROMEDIO GENERAL (SOLO UNA VEZ, AL FINAL)
+    const promGeneral = totalTemas > 0 ? (sumaPromedios / totalTemas) : 0;
+
+    document.getElementById('expPromedioGeneral').textContent =
+        promGeneral.toFixed(1);
+}
+     function cerrarExpediente() {  
+                 document.getElementById('modalExpediente').classList.add('hidden');
+// 🔥 FIX PROMEDIO GENERAL (evita que sea 0 si hay 1 tema)
+let promGeneral = 0;
+
+if (totalTemas > 0) {
+    promGeneral = sumaPromedios / totalTemas;
+}
+
+document.getElementById('expPromedioGeneral').textContent =
+    promGeneral.toFixed(1);
+     }
+
+        // --- GESTION GRUPO/TUTOR ---
+        function guardarDatosTutor() {
+            const key = `${currentGrado}-${currentGrupo}`;
+            db.tutores[key] = {
+                nombre: document.getElementById('tutorNombre').value.trim(),
+                tel: document.getElementById('tutorTel').value.trim()
+            };
+            save(); refresh();
+            alert("Información del tutor actualizada.");
         }
 
-        function actualizarGraficaBarras() {
-            const canvas = document.getElementById('chartPromedios');
-            if(!canvas) return;
-            const ctx = canvas.getContext('2d');
+        // --- RENDERIZADO ---
+        function refresh() {
+            const ctx = getContexto();
+            document.getElementById('displayContexto').textContent = `${currentGrado}° ${currentGrupo}`;
             
-            const values = GRUPOS.map(g => {
-                const gAl = alumnos.filter(a => a.grupo === g);
-                const sum = gAl.reduce((acc, a) => acc + (a.calificaciones?.[config.trimestre] || 0), 0);
-                return gAl.length > 0 ? (sum / gAl.length).toFixed(1) : 0;
-            });
+            // Botones Grado/Grupo
+            document.querySelectorAll('.grado-btn').forEach(b => b.classList.toggle('active', b.id === `grado-${currentGrado}`));
+            document.querySelectorAll('.grupo-btn').forEach(b => b.classList.toggle('active', b.id === `grupo-${currentGrupo}`));
 
-            if(chartBarras) chartBarras.destroy();
-            chartBarras = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: GRUPOS,
-                    datasets: [{ label: 'Promedio', data: values, backgroundColor: '#1e1b4b', borderRadius: 4 }]
-                },
-                options: { 
-                    responsive: true, 
-                    plugins: { legend: { display: false } },
-                    scales: { 
-                        y: { min:0, max:10, grid: { display: false } }, 
-                        x: { grid: { display: false } } 
-                    } 
+            // Cabecera Tutor
+            const tKey = `${currentGrado}-${currentGrupo}`;
+            const tutor = db.tutores[tKey];
+            const cabT = document.getElementById('infoTutorCabecera');
+            if (tutor?.nombre) {
+                cabT.classList.remove('hidden');
+                document.getElementById('nombreTutorCabecera').textContent = tutor.nombre;
+                // Sincronizar inputs de configuración si están vacíos o cambian
+                if (document.getElementById('view-ponderaciones').classList.contains('hidden')) {
+                    document.getElementById('tutorNombre').value = tutor.nombre;
+                    document.getElementById('tutorTel').value = tutor.tel || '';
                 }
-            });
-        }
+            } else cabT.classList.add('hidden');
 
-        // --- Resto de funciones (Modal, WA, etc.) ---
-        function mostrarFormularioNuevo() {
-            document.getElementById('form-alumno').reset();
-            document.getElementById('edit-id').value = '';
-            document.getElementById('modal-titulo').innerText = 'Nuevo Alumno';
-            document.getElementById('btn-eliminar').classList.add('hidden');
-            renderCamposCalificaciones();
-            document.getElementById('modal-alumno').classList.remove('hidden');
-        }
-
-        function renderCamposCalificaciones(vals = {}) {
-            const cont = document.getElementById('campos-calificaciones');
-            cont.innerHTML = '<p class="text-[9px] font-black text-indigo-400 mb-2 uppercase">Calificaciones</p>';
-            config.rasgos.forEach(r => {
-                cont.innerHTML += `
-                    <div class="flex items-center justify-between py-1">
-                        <span class="text-[10px] font-bold text-indigo-900">${r.nombre}</span>
-                        <input type="number" id="val-${r.id}" value="${vals[r.id] || ''}" min="0" max="10" step="0.1" class="w-16 p-2 rounded-lg border text-center font-bold">
-                    </div>`;
-            });
-        }
-
-        function editarAlumno(id) {
-            const a = alumnos.find(al => al.id === id);
-            if(!a) return;
-            mostrarFormularioNuevo();
-            document.getElementById('edit-id').value = a.id;
-            document.getElementById('nombre').value = a.nombre;
-            document.getElementById('grupo').value = a.grupo;
-            document.getElementById('whatsapp').value = a.whatsapp || '';
-            document.getElementById('modal-titulo').innerText = 'Editar Alumno';
-            document.getElementById('btn-eliminar').classList.remove('hidden');
-            renderCamposCalificaciones(a.detallesCalificaciones?.[config.trimestre] || {});
-        }
-
-        document.getElementById('form-alumno').onsubmit = (e) => {
-            e.preventDefault();
-            const id = document.getElementById('edit-id').value || Date.now().toString();
-            let detCals = {}, suma = 0;
-            config.rasgos.forEach(r => {
-                const val = parseFloat(document.getElementById(`val-${r.id}`).value) || 0;
-                detCals[r.id] = val;
-                suma += (val * (r.pct / 100));
+            // Select Temas
+            const sel = document.getElementById('temaContenido');
+            sel.innerHTML = '';
+            Object.keys(db.temas).forEach(t => {
+                const op = document.createElement('option');
+                op.value = t; op.textContent = t; op.selected = (t === currentTema);
+                sel.appendChild(op);
             });
 
-            const index = alumnos.findIndex(a => a.id === id);
-            const data = {
-                id,
-                nombre: document.getElementById('nombre').value.toUpperCase(),
-                grupo: document.getElementById('grupo').value,
-                whatsapp: document.getElementById('whatsapp').value,
-                calificaciones: { [config.trimestre]: suma },
-                detallesCalificaciones: { [config.trimestre]: detCals }
+            renderTabla();
+            renderPonderacionesUI();
+            updateStats();
+function actualizarPromedioFinal() {
+    // 1. Obtén todos los elementos que contienen las notas
+    // Cambia '.clase-nota' por el selector que uses (ej. los inputs o celdas de tu tabla)
+    const elementosNotas = document.querySelectorAll('.clase-nota');
+    
+    let suma = 0;
+    let contador = 0;
+
+    elementosNotas.forEach(elemento => {
+        // Si usas inputs es .value, si es una celda es .innerText
+        const valor = parseFloat(elemento.value || elemento.innerText);
+        
+        if (!isNaN(valor)) {
+            suma += valor;
+            contador++;
+        }
+    });
+
+    // 2. Calcular y mostrar
+    const promedio = contador > 0 ? (suma / contador).toFixed(2) : "0.0";
+    document.getElementById('valor-promedio').innerText = promedio;
+
+    // 3. Opcional: Cambiar color si aprueba o reprueba (ej. 6.0)
+    const color = promedio >= 6 ? '#2ecc71' : '#e74c3c';
+    document.getElementById('valor-promedio').style.color = color;
+}
+
+        }
+
+       
+  function renderTabla() {
+    const ctx = getContexto();
+    const body = document.getElementById('listaEvaluacion');
+const head = document.getElementById('tablaCabecera');
+
+let hHTML = `
+    <tr>
+        <th class="px-6 py-4 text-white">Alumno</th>
+`;
+
+ctx.criterios.forEach(c => {
+    hHTML += `
+        <th class="px-2 py-4 text-center text-white text-xs font-bold">
+            ${c.nombre}
+        </th>
+    `;
+});
+
+hHTML += `
+        <th class="px-4 py-4 text-white">Promedio</th>
+       
+    </tr>
+`;
+
+head.innerHTML = hHTML;
+    body.innerHTML = '';
+
+    if (!ctx.alumnos || ctx.alumnos.length === 0) return;
+
+    ctx.alumnos.forEach(al => {
+
+        if (!al.notas) al.notas = {};
+
+        ctx.criterios.forEach(c => {
+            if (al.notas[c.nombre] === undefined) {
+                al.notas[c.nombre] = 0;
+            }
+        });
+
+        const tr = document.createElement('tr');
+
+        let bHTML = `
+            <td class="px-6 py-4 cursor-pointer text-sky-400 font-bold"
+    onclick="verExpediente('${al.nombre}')">
+    ${al.nombre}
+</td>
+        `;
+
+
+        ctx.criterios.forEach(c => {
+            bHTML += `
+               <td class="px-4 py-3 text-center">
+                    <input type="number"
+                        value="${al.notas[c.nombre]}"
+                      oninput="updateN(${al.id}, \`${c.nombre}\`, this.value)"
+                       class="w-20 h-12 text-center text-lg font-bold text-black bg-white rounded-xl">
+                </td>
+            `;
+        });
+
+        bHTML += `
+            <td class="px-4 py-2">
+    <span class="${parseFloat(calcProm(al, ctx.criterios)) < 7 ? 'text-red-600 font-bold' : 'text-white font-bold'}">
+        ${calcProm(al, ctx.criterios)}
+    </span>
+</td>
+
+            <td class="px-4 py-2">
+    <div class="flex flex-col gap-1">
+
+        <button onclick="enviarReporteAlumno(${al.id})"
+            class="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">
+            Reporte a Papa
+        </button>
+
+        <button onclick="enviarReporteTutor(${al.id})"
+            class="bg-green-600 text-white px-2 py-1 rounded text-xs font-bold">
+            Reorte a Tutor
+        </button>
+
+        <button onclick="editarAlumno(${al.id})"
+            class="bg-amber-500 text-black px-2 py-1 rounded text-xs font-bold">
+            Modificar
+        </button>
+
+        <button onclick="borrarAlumno(${al.id})"
+            class="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">
+            Borrar
+        </button>
+
+    </div>
+</td>
+        `;
+
+        tr.innerHTML = bHTML;
+        body.appendChild(tr);
+    });
+
+    // 👇 ESTO VA ADENTRO (AL FINAL)
+    const total = ctx.alumnos.length;
+    const totalPaginas = Math.ceil(total / alumnosPorPagina);
+
+    document.getElementById('infoPagina').textContent =
+        `Página ${paginaActual} de ${totalPaginas}`;
+}
+ 
+      function updateN(id, campo, val) {
+    const ctx = getContexto();
+    const al = ctx.alumnos.find(a => a.id === id);
+
+    if (!al) return;
+
+    let nota = parseFloat(val) || 0;
+
+    if (nota < 0) nota = 0;
+    if (nota > 10) nota = 10;
+
+    al.notas[campo] = nota;
+
+    save();
+    renderTabla();
+    renderPonderacionesUI();
+    updateStats();
+}
+
+function cambiarNota(id, campo, delta) {
+    const ctx = getContexto();
+    const al = ctx.alumnos.find(a => a.id === id);
+
+    if (!al) return;
+
+    let nota = parseFloat(al.notas[campo]) || 0;
+    nota += delta;
+
+    if (nota < 0) nota = 0;
+    if (nota > 10) nota = 10;
+
+    al.notas[campo] = nota;
+
+    save();
+    renderTabla();
+    updateStats();
+}
+
+function enviarReporteAlumno(id) {
+    prepararReporte(id);
+
+    setTimeout(() => {
+        document.getElementById('btnWhatsappAlumno').click();
+    }, 300);
+}
+
+function enviarReporteTutor(id) {
+    prepararReporte(id);
+
+    setTimeout(() => {
+        document.getElementById('btnWhatsappTutor').click();
+    }, 300);
+}
+
+function editarAlumno(id) {
+    const ctx = getContexto();
+    const al = ctx.alumnos.find(a => a.id === id);
+
+    if (!al) return;
+
+    let alumnoGlobal = db.alumnosGlobal.find(a => a.nombre === al.nombre);
+
+    const nuevoNombre = prompt("Modificar nombre del alumno:", al.nombre);
+    if (!nuevoNombre) return;
+
+    const nuevoCel = prompt("Modificar número celular:", alumnoGlobal ? alumnoGlobal.tel : "");
+
+    al.nombre = nuevoNombre.trim();
+
+    if (alumnoGlobal) {
+        alumnoGlobal.nombre = nuevoNombre.trim();
+        alumnoGlobal.tel = nuevoCel ? nuevoCel.trim() : "";
+    } else {
+        db.alumnosGlobal.push({
+            nombre: nuevoNombre.trim(),
+            tel: nuevoCel ? nuevoCel.trim() : ""
+        });
+    }
+
+    save();
+    renderTabla();
+    updateStats();
+} // --- REPORTES ---
+        function prepararReporte(id) {
+            const ctx = getContexto();
+            const al = ctx.alumnos.find(a => a.id === id);
+            const glob = db.alumnosGlobal.find(g => g.nombre === al.nombre);
+            const prom = calcProm(al, ctx.criterios);
+            const tKey = `${currentGrado}-${currentGrupo}`;
+            const tutor = db.tutores[tKey];
+
+            let m = `📊 *REPORTE ACADÉMICO*\n\n`;
+            m += `👤 *Estudiante:* ${al.nombre}\n`;
+            m += `🏫 *Grado:* ${currentGrado}° ${currentGrupo}\n`;
+            m += `📌 *Tema:* ${currentTema}\n\n`;
+            m += `*NOTAS:* \n`;
+            ctx.criterios.forEach(c => m += `• ${c.nombre}: ${al.notas[c.nombre] || 0}\n`);
+            m += `\n🎯 *PROMEDIO FINAL DE UN TEMA: ${prom}*\n\n`;
+            if (tutor?.nombre) m += `👨‍🏫 *Tutor:* ${tutor.nombre}\n`;
+
+            document.getElementById('textoReporte').value = m;
+            document.getElementById('modalReporte').classList.remove('hidden');
+
+            document.getElementById('btnWhatsappAlumno').onclick = () => {
+                const t = glob?.tel || "";
+                if (!t) return alert("WhatsApp del alumno no registrado.");
+                window.open(`https://wa.me/${t.replace(/\D/g, '')}?text=${encodeURIComponent(m)}`, '_blank');
             };
 
-            if(index > -1) {
-                alumnos[index] = {...alumnos[index], ...data};
-            } else {
-                alumnos.push(data);
-            }
-            save(); cerrarModal(); renderFiltros(); renderAlumnos();
-        };
-
-        function eliminarAlumnoActual() {
-            if(confirm("¿Eliminar alumno?")) {
-                alumnos = alumnos.filter(a => a.id !== document.getElementById('edit-id').value);
-                save(); cerrarModal(); renderFiltros(); renderAlumnos();
-            }
+            document.getElementById('btnWhatsappTutor').onclick = () => {
+                const t = tutor?.tel || "";
+                if (!t) return alert("WhatsApp del tutor no configurado en este grupo.");
+                window.open(`https://wa.me/${t.replace(/\D/g, '')}?text=${encodeURIComponent(m)}`, '_blank');
+            };
         }
 
-        function save() { localStorage.setItem('escolar_db_v6', JSON.stringify(alumnos)); }
-        function cerrarModal() { document.getElementById('modal-alumno').classList.add('hidden'); }
-        
-        function llenarSelectGrupos() {
-            const sel = document.getElementById('grupo');
-            const dSel = document.getElementById('dash-filtro-grupo');
-            sel.innerHTML = '';
-            dSel.innerHTML = '<option value="TODOS">Ver Todo</option>';
-            GRUPOS.forEach(g => {
-                sel.innerHTML += `<option value="${g}">${g}</option>`;
-                dSel.innerHTML += `<option value="${g}">${g}</option>`;
+        // --- AUXILIARES ---
+// --- AUXILIARES ---
+
+function calcProm(alumno, criterios) {
+    if (!alumno.notas) return 0;
+
+    let total = 0;
+    let sumaPesos = 0;
+
+    criterios.forEach(c => {
+        const nota = parseFloat(alumno.notas[c.nombre]) || 0;
+        const peso = parseFloat(c.peso) || 0;
+
+        total += nota * peso;
+        sumaPesos += peso;
+    });
+
+    if (sumaPesos === 0) return 0;
+
+    return (total / sumaPesos).toFixed(1);
+}
+
+        function switchView(v) {
+            ['evaluar', 'ponderaciones', 'stats'].forEach(x => {
+                document.getElementById(`view-${x}`).classList.add('hidden');
+                document.getElementById(`btn-${x}`).classList.remove('active', 'text-white');
             });
+            document.getElementById(`view-${v}`).classList.remove('hidden');
+            document.getElementById(`btn-${v}`).classList.add('active', 'text-white');
         }
 
-        function exportarDatos() {
-            const blob = new Blob([JSON.stringify(alumnos)], {type: "application/json"});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'RESPALDO_ESCOLAR.json'; a.click();
+        function setGrado(n) { currentGrado = n; refresh(); }
+        function setGrupo(l) { currentGrupo = l; refresh(); }
+        function cambiarTemaSeleccionado(v) { currentTema = v; refresh(); }
+
+        function promptNuevoTema() {
+            const n = prompt("Nombre del tema:");
+            if (n && !db.temas[n]) {
+                db.temas[n] = {};
+                currentTema = n;
+                save(); refresh();
+            }
         }
 
-        function enviarWA(id) {
-            const a = alumnos.find(al => al.id === id);
-            const msj = `Hola, el promedio del alumno ${a.nombre} es ${a.calificaciones[config.trimestre].toFixed(1)}.`;
-            window.open(`https://wa.me/52${a.whatsapp}?text=${encodeURIComponent(msj)}`, '_blank');
+        function updateStats() {
+            const alms = getContexto().alumnos;
+            const ps = alms.map(a => parseFloat(calcProm(a, getContexto().criterios)));
+            document.getElementById('statPromedio').textContent = alms.length ? (ps.reduce((a,b)=>a+b,0)/ps.length).toFixed(1) : "0.0";
+            document.getElementById('statAprobados').textContent = ps.filter(p=>p>=7).length;
+            document.getElementById('statRiesgo').textContent = ps.filter(p=>p<6).length;
         }
 
-        window.onload = init;
+        function renderPonderacionesUI() {
+            const cont = document.getElementById('listaPonderaciones');
+            const ctx = getContexto();
+            cont.innerHTML = '';
+            ctx.criterios.forEach((c, i) => {
+                const div = document.createElement('div');
+                div.className = "flex gap-2";
+                div.innerHTML = `<input type="text" value="${c.nombre}" oninput="editCN(${i}, this.value)" class="flex-1 input-dark p-3 rounded-xl text-xs"><input type="number" value="${c.peso}" oninput="editCP(${i}, this.value)" class="w-20 input-dark p-3 rounded-xl text-center text-xs text-sky-400">`;
+                cont.appendChild(div);
+            });
+            document.getElementById('totalPorcentaje').textContent = ctx.criterios.reduce((a,c)=>a+c.peso,0) + '%';
+        }
+
+        function editCN(i, v) { getContexto().criterios[i].nombre = v; }
+        function editCP(i, v) { getContexto().criterios[i].peso = parseInt(v) || 0; renderPonderacionesUI(); }
+        function agregarCriterio() { getContexto().criterios.push({nombre:'Nuevo', peso:0}); renderPonderacionesUI(); }
+        function savePonderaciones() { save(); refresh(); switchView('evaluar'); }
+
+        window.onload = () => { initDB(); refresh(); };
     </script>
 </body>
 </html>
